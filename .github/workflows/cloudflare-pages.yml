@@ -1,8 +1,10 @@
 name: Deploy Cloudflare Pages
 
+# Disabled in the personal Android-port fork.
+# The upstream project owns the Cloudflare deployment and its secrets.
+# Run manually only when intentionally configuring Cloudflare for this fork.
+
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,7 +17,6 @@ concurrency:
 jobs:
   deploy:
     name: Build, verify, and deploy
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     environment:
@@ -41,12 +42,7 @@ jobs:
           source "${RUNNER_TEMP}/emsdk/emsdk_env.sh"
           export PATH="${host_node_bin}:${PATH}"
           node --version
-          if ! npm run build:pages-runtime >"${RUNNER_TEMP}/cloudflare-build.log" 2>&1; then
-            tail -n 200 "${RUNNER_TEMP}/cloudflare-build.log"
-            exit 1
-          fi
-          tail -n 40 "${RUNNER_TEMP}/cloudflare-build.log"
-          ccache --show-stats
+          npm run build:pages-runtime
 
       - name: Package and audit direct-header artifact
         working-directory: WebAssembly
@@ -57,7 +53,6 @@ jobs:
           npm run test:pages-artifact-guard
           npm run test:cloudflare-artifact-guard
           node tools/verify_cloudflare_site.mjs cloudflare-dist >"${RUNNER_TEMP}/cloudflare-inventory.json"
-          node -e 'const x=require(process.argv[1]); console.log(JSON.stringify({files:x.files,totalBytes:x.totalBytes}, null, 2))' "${RUNNER_TEMP}/cloudflare-inventory.json"
 
       - name: Install Chromium
         working-directory: WebAssembly
