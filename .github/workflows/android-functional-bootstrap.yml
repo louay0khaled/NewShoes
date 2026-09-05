@@ -1,0 +1,28 @@
+name: Functional Android APK Bootstrap
+
+on:
+  push:
+    paths:
+      - '.github/workflows/android-functional-bootstrap.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-functional-apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Download proven native Android build
+        run: |
+          curl -fL --retry 3 \
+            -o GeneralsZH-full.apk \
+            https://github.com/tarek369/GeneralsZH-Android/releases/download/v0.2-android/GeneralsZH-full.apk
+          sha256sum GeneralsZH-full.apk
+      - name: Upload functional APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NewShoes-Functional-GeneralsZH-Android
+          path: GeneralsZH-full.apk
+          if-no-files-found: error
